@@ -64,9 +64,9 @@ are guaranteed to represent valid proleptic Gregorian calendar dates.
 -}
 type Date
     = Date
-        { year : Int
-        , month : Int
-        , day : Int
+        { opaqueYear : Int
+        , opaqueMonth : Int
+        , opaqueDay : Int
         }
 
 
@@ -104,8 +104,8 @@ Invalid values are clamped to the nearest valid date.
 
 -}
 date : Int -> Int -> Int -> Date
-date year month day =
-    firstValid year (clampMonth month) (clampDay day)
+date yr mo dy =
+    firstValid yr (clampMonth mo) (clampDay dy)
 
 
 {-| year returns a Date's year as an Int.
@@ -115,8 +115,8 @@ date year month day =
 
 -}
 year : Date -> Int
-year (Date { year }) =
-    year
+year (Date { opaqueYear }) =
+    opaqueYear
 
 
 {-| month returns a Date's month as an Int. Guaranteed to be in the
@@ -127,8 +127,8 @@ range [1, 12].
 
 -}
 month : Date -> Int
-month (Date { month }) =
-    month
+month (Date { opaqueMonth }) =
+    opaqueMonth
 
 
 {-| day returns a Date's year as an Int. Guaranteed to be valid for
@@ -145,8 +145,8 @@ the Date's (year, month) pair and in the range [1, 31].
 
 -}
 day : Date -> Int
-day (Date { day }) =
-    day
+day (Date { opaqueDay }) =
+    opaqueDay
 
 
 {-| weekday returns the day of week for a given Date.
@@ -158,42 +158,42 @@ This uses Sakamoto's method to determine the day of week.
 
 -}
 weekday : Date -> Weekday
-weekday (Date { year, month, day }) =
+weekday (Date { opaqueYear, opaqueMonth, opaqueDay }) =
     let
         m =
-            if month == 1 then
+            if opaqueMonth == 1 then
                 0
-            else if month == 2 then
+            else if opaqueMonth == 2 then
                 3
-            else if month == 3 then
+            else if opaqueMonth == 3 then
                 2
-            else if month == 4 then
+            else if opaqueMonth == 4 then
                 5
-            else if month == 5 then
+            else if opaqueMonth == 5 then
                 0
-            else if month == 6 then
+            else if opaqueMonth == 6 then
                 3
-            else if month == 7 then
+            else if opaqueMonth == 7 then
                 5
-            else if month == 8 then
+            else if opaqueMonth == 8 then
                 1
-            else if month == 9 then
+            else if opaqueMonth == 9 then
                 4
-            else if month == 10 then
+            else if opaqueMonth == 10 then
                 6
-            else if month == 11 then
+            else if opaqueMonth == 11 then
                 2
             else
                 4
 
         y =
-            if month < 3 then
-                year - 1
+            if opaqueMonth < 3 then
+                opaqueYear - 1
             else
-                year
+                opaqueYear
 
         d =
-            (y + y // 4 - y // 100 + y // 400 + m + day) % 7
+            modBy 7 (y + y // 4 - y // 100 + y // 400 + m + opaqueDay)
     in
         if d == 0 then
             Sun
@@ -221,8 +221,8 @@ nearest valid date.
 
 -}
 setYear : Int -> Date -> Date
-setYear year (Date ({ month, day } as date)) =
-    firstValid year month day
+setYear yr (Date { opaqueMonth, opaqueDay }) =
+    firstValid yr opaqueMonth opaqueDay
 
 
 {-| setMonth updates a Date's month. Invalid values are clamped to the
@@ -240,8 +240,8 @@ nearest valid date.
 
 -}
 setMonth : Int -> Date -> Date
-setMonth month (Date ({ year, day } as date)) =
-    firstValid year (clampMonth month) day
+setMonth mo (Date { opaqueYear, opaqueDay } ) =
+    firstValid opaqueYear (clampMonth mo) opaqueDay
 
 
 {-| setDay updates a Date's day. Invalid values are clamped to the
@@ -264,8 +264,8 @@ nearest valid date.
 
 -}
 setDay : Int -> Date -> Date
-setDay day (Date ({ year, month } as date)) =
-    firstValid year month (clampDay day)
+setDay dy (Date { opaqueYear, opaqueMonth } ) =
+    firstValid opaqueYear opaqueMonth (clampDay dy)
 
 
 {-| addYears adds a relative number (positive or negative) of years to
@@ -280,8 +280,8 @@ Date can be produced.
 
 -}
 addYears : Int -> Date -> Date
-addYears years (Date ({ year, month, day } as date)) =
-    firstValid (year + years) month day
+addYears years (Date { opaqueYear, opaqueMonth, opaqueDay }) =
+    firstValid (opaqueYear + years) opaqueMonth opaqueDay
 
 
 {-| addMonths adds a relative number (positive or negative) of months to
@@ -295,10 +295,10 @@ semantics are the same as `addYears`.
 
 -}
 addMonths : Int -> Date -> Date
-addMonths months (Date { year, month, day }) =
+addMonths months (Date { opaqueYear, opaqueMonth, opaqueDay }) =
     let
         ms =
-            year * 12 + month - 1 + months
+            opaqueYear * 12 + opaqueMonth - 1 + months
 
         yo =
             if ms < 0 then
@@ -306,7 +306,7 @@ addMonths months (Date { year, month, day }) =
             else
                 0
     in
-        date (((ms - yo) // 12) + yo) ((ms % 12) + 1) day
+        date (((ms - yo) // 12) + yo) ((modBy 12 ms) + 1) opaqueDay
 
 
 {-| days adds an exact number (positive or negative) of days to a
@@ -320,8 +320,8 @@ there is no fuzzing logic here like there is in `add{Months,Years}`.
 
 -}
 addDays : Int -> Date -> Date
-addDays days (Date ({ year, month, day } as date)) =
-    daysFromYearMonthDay year month day
+addDays days (Date { opaqueYear, opaqueMonth, opaqueDay }) =
+    daysFromYearMonthDay opaqueYear opaqueMonth opaqueDay
         |> (+) days
         |> dateFromDays
 
@@ -387,11 +387,11 @@ by last example below.
 -}
 delta : Date -> Date -> DateDelta
 delta (Date d1) (Date d2) =
-    { years = d1.year - d2.year
-    , months = (abs d1.year * 12 + d1.month) - (abs d2.year * 12 + d2.month)
+    { years = d1.opaqueYear - d2.opaqueYear
+    , months = (abs d1.opaqueYear * 12 + d1.opaqueMonth) - (abs d2.opaqueYear * 12 + d2.opaqueMonth)
     , days =
-        daysFromYearMonthDay d1.year d1.month d1.day
-            - daysFromYearMonthDay d2.year d2.month d2.day
+        daysFromYearMonthDay d1.opaqueYear d1.opaqueMonth d1.opaqueDay
+            - daysFromYearMonthDay d2.opaqueYear d2.opaqueMonth d2.opaqueDay
     }
 
 
@@ -404,8 +404,8 @@ This is useful if you want to use Dates as Dict keys.
 
 -}
 toTuple : Date -> ( Int, Int, Int )
-toTuple (Date { year, month, day }) =
-    ( year, month, day )
+toTuple (Date { opaqueYear, opaqueMonth, opaqueDay }) =
+    ( opaqueYear, opaqueMonth, opaqueDay )
 
 
 {-| fromTuple converts a (year, month, day) tuple into a Date value.
@@ -416,8 +416,8 @@ toTuple (Date { year, month, day }) =
 
 -}
 fromTuple : ( Int, Int, Int ) -> Date
-fromTuple ( year, month, day ) =
-    date year month day
+fromTuple ( opaqueYear, opaqueMonth, opaqueDay ) =
+    date opaqueYear opaqueMonth opaqueDay
 
 
 {-| isValidDate returns True if the given year, month and day
@@ -444,9 +444,9 @@ abort creating a "bad" `Date`.
 
 -}
 isValidDate : Int -> Int -> Int -> Bool
-isValidDate year month day =
-    daysInMonth year month
-        |> Maybe.map (\days -> day >= 1 && day <= days)
+isValidDate y m d =
+    daysInMonth y m
+        |> Maybe.map (\days -> d >= 1 && d <= days)
         |> Maybe.withDefault False
 
 
@@ -477,7 +477,7 @@ rules for leap years are as follows:
 -}
 isLeapYear : Int -> Bool
 isLeapYear y =
-    y % 400 == 0 || y % 100 /= 0 && y % 4 == 0
+    modBy 400 y == 0 || modBy 100 y /= 0 && modBy 4 y == 0
 
 
 {-| daysInMonth returns the number of days in a month given a specific
@@ -534,50 +534,51 @@ unsafeDaysInMonth y m =
     else if m == 12 then
         31
     else
-        Debug.crash <| "invalid call to unsafeDaysInMonth: year=" ++ toString y ++ " month=" ++ toString m
-
+-- FIXME: Debug.crash isn't available in Elm 0.19
+        Debug.todo ("handle invalid call to unsafeDaysInMonth: year=" ++ String.fromInt y ++ " month=" ++ String.fromInt m)
+        31
 
 firstValid : Int -> Int -> Int -> Date
-firstValid year month day =
+firstValid yr mo dy =
     let
         ( y, m, d ) =
-            if isValidDate year month day then
-                ( year, month, day )
-            else if isValidDate year month (day - 1) then
-                ( year, month, day - 1 )
-            else if isValidDate year month (day - 2) then
-                ( year, month, day - 2 )
+            if isValidDate yr mo dy then
+                ( yr, mo, dy )
+            else if isValidDate yr mo (dy - 1) then
+                ( yr, mo, dy - 1 )
+            else if isValidDate yr mo (dy - 2) then
+                ( yr, mo, dy - 2 )
             else
-                ( year, month, day - 3 )
+                ( yr, mo, dy - 3 )
     in
-        Date { year = y, month = m, day = d }
+        Date { opaqueYear = y, opaqueMonth = m, opaqueDay = d }
 
 
 daysFromYearMonthDay : Int -> Int -> Int -> Int
-daysFromYearMonthDay year month day =
+daysFromYearMonthDay y m d =
     let
         yds =
-            daysFromYear year
+            daysFromYear y
 
         mds =
-            daysFromYearMonth year month
+            daysFromYearMonth y m
 
         dds =
-            day - 1
+            d - 1
     in
         yds + mds + dds
 
 
 daysFromYearMonth : Int -> Int -> Int
-daysFromYearMonth year month =
+daysFromYearMonth yr mo =
     let
-        go year month acc =
-            if month == 0 then
+        go y m acc =
+            if m == 0 then
                 acc
             else
-                go year (month - 1) (acc + unsafeDaysInMonth year month)
+                go y (m - 1) (acc + unsafeDaysInMonth y m)
     in
-        go year (month - 1) 0
+        go yr (mo - 1) 0
 
 
 daysFromYear : Int -> Int
@@ -622,21 +623,21 @@ dateFromDays ds =
             ds // d400
 
         d =
-            rem ds d400
+            remainderBy d400 ds
 
-        year =
+        year_ =
             yearFromDays (d + 1)
 
         leap =
-            if isLeapYear year then
+            if isLeapYear year_ then
                 (+) 1
             else
                 identity
 
         doy =
-            d - daysFromYear year
+            d - daysFromYear year_
 
-        ( month, day ) =
+        ( month_, day_ ) =
             if doy < 31 then
                 ( 1, doy + 1 )
             else if doy < leap 59 then
@@ -663,17 +664,17 @@ dateFromDays ds =
                 ( 12, doy - leap 334 + 1 )
     in
         Date
-            { year = year + y400 * 400
-            , month = month
-            , day = day
+            { opaqueYear = year_ + y400 * 400
+            , opaqueMonth = month_
+            , opaqueDay = day_
             }
 
 
 clampMonth : Int -> Int
-clampMonth month =
-    clamp 1 12 month
+clampMonth cm =
+    clamp 1 12 cm
 
 
 clampDay : Int -> Int
-clampDay day =
-    clamp 1 31 day
+clampDay cd =
+    clamp 1 31 cd
