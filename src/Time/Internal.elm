@@ -42,6 +42,7 @@ padded : Int -> String
 padded n =
     if n < 10 then
         "0" ++ String.fromInt n
+
     else
         String.fromInt n
 
@@ -51,21 +52,21 @@ padded3 n =
     String.padLeft 3 '0' (String.fromInt n)
 
 
-dayMs : number
+dayMs : Int
 dayMs =
     86400000
 
 
-hourMs : number
+hourMs : Int
 hourMs =
     3600000
 
 
-minuteMs : number
+minuteMs : Int
 minuteMs =
     60000
 
 
-secondMs : number
+secondMs : Int
 secondMs =
     1000

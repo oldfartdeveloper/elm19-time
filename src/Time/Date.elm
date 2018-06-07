@@ -2,7 +2,6 @@ module Time.Date
     exposing
         ( Date
         , DateDelta
-        , Weekday(..)
         , addDays
         , addMonths
         , addYears
@@ -58,6 +57,8 @@ represent any date of the proleptic Gregorian calendar.
 
 -}
 
+import Time exposing (Weekday(..))
+
 
 {-| Date is the opaque type for all Date values. Values of this type
 are guaranteed to represent valid proleptic Gregorian calendar dates.
@@ -68,18 +69,6 @@ type Date
         , opaqueMonth : Int
         , opaqueDay : Int
         }
-
-
-{-| Data type used to represent the days of the week.
--}
-type Weekday
-    = Mon
-    | Tue
-    | Wed
-    | Thu
-    | Fri
-    | Sat
-    | Sun
 
 
 {-| DateDelta represents a delta between two dates.
@@ -163,52 +152,70 @@ weekday (Date { opaqueYear, opaqueMonth, opaqueDay }) =
         m =
             if opaqueMonth == 1 then
                 0
+
             else if opaqueMonth == 2 then
                 3
+
             else if opaqueMonth == 3 then
                 2
+
             else if opaqueMonth == 4 then
                 5
+
             else if opaqueMonth == 5 then
                 0
+
             else if opaqueMonth == 6 then
                 3
+
             else if opaqueMonth == 7 then
                 5
+
             else if opaqueMonth == 8 then
                 1
+
             else if opaqueMonth == 9 then
                 4
+
             else if opaqueMonth == 10 then
                 6
+
             else if opaqueMonth == 11 then
                 2
+
             else
                 4
 
         y =
             if opaqueMonth < 3 then
                 opaqueYear - 1
+
             else
                 opaqueYear
 
         d =
             modBy 7 (y + y // 4 - y // 100 + y // 400 + m + opaqueDay)
     in
-        if d == 0 then
-            Sun
-        else if d == 1 then
-            Mon
-        else if d == 2 then
-            Tue
-        else if d == 3 then
-            Wed
-        else if d == 4 then
-            Thu
-        else if d == 5 then
-            Fri
-        else
-            Sat
+    if d == 0 then
+        Sun
+
+    else if d == 1 then
+        Mon
+
+    else if d == 2 then
+        Tue
+
+    else if d == 3 then
+        Wed
+
+    else if d == 4 then
+        Thu
+
+    else if d == 5 then
+        Fri
+
+    else
+        Sat
 
 
 {-| setYear updates a Date's year. Invalid values are clamped to the
@@ -240,7 +247,7 @@ nearest valid date.
 
 -}
 setMonth : Int -> Date -> Date
-setMonth mo (Date { opaqueYear, opaqueDay } ) =
+setMonth mo (Date { opaqueYear, opaqueDay }) =
     firstValid opaqueYear (clampMonth mo) opaqueDay
 
 
@@ -264,7 +271,7 @@ nearest valid date.
 
 -}
 setDay : Int -> Date -> Date
-setDay dy (Date { opaqueYear, opaqueMonth } ) =
+setDay dy (Date { opaqueYear, opaqueMonth }) =
     firstValid opaqueYear opaqueMonth (clampDay dy)
 
 
@@ -303,10 +310,11 @@ addMonths months (Date { opaqueYear, opaqueMonth, opaqueDay }) =
         yo =
             if ms < 0 then
                 -1
+
             else
                 0
     in
-        date (((ms - yo) // 12) + yo) ((modBy 12 ms) + 1) opaqueDay
+    date (((ms - yo) // 12) + yo) (modBy 12 ms + 1) opaqueDay
 
 
 {-| days adds an exact number (positive or negative) of days to a
@@ -501,6 +509,7 @@ daysInMonth : Int -> Int -> Maybe Int
 daysInMonth y m =
     if m >= 1 && m <= 12 then
         Just <| unsafeDaysInMonth y m
+
     else
         Nothing
 
@@ -509,34 +518,48 @@ unsafeDaysInMonth : Int -> Int -> Int
 unsafeDaysInMonth y m =
     if m == 1 then
         31
+
     else if m == 2 && isLeapYear y then
         29
+
     else if m == 2 then
         28
+
     else if m == 3 then
         31
+
     else if m == 4 then
         30
+
     else if m == 5 then
         31
+
     else if m == 6 then
         30
+
     else if m == 7 then
         31
+
     else if m == 8 then
         31
+
     else if m == 9 then
         30
+
     else if m == 10 then
         31
+
     else if m == 11 then
         30
+
     else if m == 12 then
         31
+
     else
--- FIXME: Debug.crash isn't available in Elm 0.19
+        -- FIXME: Debug.crash isn't available in Elm 0.19
         Debug.todo ("handle invalid call to unsafeDaysInMonth: year=" ++ String.fromInt y ++ " month=" ++ String.fromInt m)
-        31
+            31
+
 
 firstValid : Int -> Int -> Int -> Date
 firstValid yr mo dy =
@@ -544,14 +567,17 @@ firstValid yr mo dy =
         ( y, m, d ) =
             if isValidDate yr mo dy then
                 ( yr, mo, dy )
+
             else if isValidDate yr mo (dy - 1) then
                 ( yr, mo, dy - 1 )
+
             else if isValidDate yr mo (dy - 2) then
                 ( yr, mo, dy - 2 )
+
             else
                 ( yr, mo, dy - 3 )
     in
-        Date { opaqueYear = y, opaqueMonth = m, opaqueDay = d }
+    Date { opaqueYear = y, opaqueMonth = m, opaqueDay = d }
 
 
 daysFromYearMonthDay : Int -> Int -> Int -> Int
@@ -566,7 +592,7 @@ daysFromYearMonthDay y m d =
         dds =
             d - 1
     in
-        yds + mds + dds
+    yds + mds + dds
 
 
 daysFromYearMonth : Int -> Int -> Int
@@ -575,10 +601,11 @@ daysFromYearMonth yr mo =
         go y m acc =
             if m == 0 then
                 acc
+
             else
                 go y (m - 1) (acc + unsafeDaysInMonth y m)
     in
-        go yr (mo - 1) 0
+    go yr (mo - 1) 0
 
 
 daysFromYear : Int -> Int
@@ -589,11 +616,13 @@ daysFromYear y =
             + ((y - 1) // 4)
             - ((y - 1) // 100)
             + ((y - 1) // 400)
+
     else if y < 0 then
         (y * 365)
             + (y // 4)
             - (y // 100)
             + (y // 400)
+
     else
         0
 
@@ -607,10 +636,11 @@ yearFromDays ds =
         d =
             daysFromYear y
     in
-        if ds <= d then
-            y - 1
-        else
-            y
+    if ds <= d then
+        y - 1
+
+    else
+        y
 
 
 dateFromDays : Int -> Date
@@ -631,6 +661,7 @@ dateFromDays ds =
         leap =
             if isLeapYear year_ then
                 (+) 1
+
             else
                 identity
 
@@ -640,34 +671,45 @@ dateFromDays ds =
         ( month_, day_ ) =
             if doy < 31 then
                 ( 1, doy + 1 )
+
             else if doy < leap 59 then
                 ( 2, doy - 31 + 1 )
+
             else if doy < leap 90 then
                 ( 3, doy - leap 59 + 1 )
+
             else if doy < leap 120 then
                 ( 4, doy - leap 90 + 1 )
+
             else if doy < leap 151 then
                 ( 5, doy - leap 120 + 1 )
+
             else if doy < leap 181 then
                 ( 6, doy - leap 151 + 1 )
+
             else if doy < leap 212 then
                 ( 7, doy - leap 181 + 1 )
+
             else if doy < leap 243 then
                 ( 8, doy - leap 212 + 1 )
+
             else if doy < leap 273 then
                 ( 9, doy - leap 243 + 1 )
+
             else if doy < leap 304 then
                 ( 10, doy - leap 273 + 1 )
+
             else if doy < leap 334 then
                 ( 11, doy - leap 304 + 1 )
+
             else
                 ( 12, doy - leap 334 + 1 )
     in
-        Date
-            { opaqueYear = year_ + y400 * 400
-            , opaqueMonth = month_
-            , opaqueDay = day_
-            }
+    Date
+        { opaqueYear = year_ + y400 * 400
+        , opaqueMonth = month_
+        , opaqueDay = day_
+        }
 
 
 clampMonth : Int -> Int
