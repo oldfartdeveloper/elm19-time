@@ -202,8 +202,8 @@ mkDateTime withDate withTime =
 
 -}
 makeDateTime : Date -> Int -> DateTime
-makeDateTime withDate withTime =
-    DateTime { date = withDate, offset = withTime }
+makeDateTime withDate withOffset =
+    DateTime { date = withDate, offset = withOffset }
 
 
 {-| date returns a DateTime's Date.
