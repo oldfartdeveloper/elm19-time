@@ -1,5 +1,7 @@
 # elm-time [![Build Status](https://travis-ci.org/elm-community/elm-time.svg)](https://travis-ci.org/elm-community/elm-time)
 
+> NOTE: The owner has archived this repo on Oct 6, 2021.
+
 ``` shell
 elm package install elm-community/elm-time
 ```
